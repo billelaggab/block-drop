@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../game/game_screen.dart';
 import '../services/game_settings.dart';
@@ -27,11 +28,38 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   bool loading = true;
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test Ad Unit ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isBannerLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -92,97 +120,110 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF090D18),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: Column(
-                children: [
-                  const SizedBox(height: 25),
-
-                  const _Logo(),
-
-                  const SizedBox(height: 45),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF111827),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Column(
                       children: [
-                        _HomeStat(
-                          label: 'HIGH SCORE',
-                          value: '${stats.highScore}',
+                        const SizedBox(height: 25),
+
+                        const _Logo(),
+
+                        const SizedBox(height: 45),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111827),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _HomeStat(
+                                label: 'HIGH SCORE',
+                                value: '${stats.highScore}',
+                              ),
+                              _HomeStat(
+                                label: 'GAMES',
+                                value: '${stats.gamesPlayed}',
+                              ),
+                              _HomeStat(
+                                label: 'TOTAL LINES',
+                                value: '${stats.totalLines}',
+                              ),
+                            ],
+                          ),
                         ),
-                        _HomeStat(
-                          label: 'GAMES',
-                          value: '${stats.gamesPlayed}',
+
+                        const SizedBox(height: 30),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 58,
+                          child: FilledButton.icon(
+                            onPressed: _play,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF7C3AED),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            icon: const Icon(Icons.play_arrow, size: 30),
+                            label: const Text(
+                              'PLAY',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
                         ),
-                        _HomeStat(
-                          label: 'TOTAL LINES',
-                          value: '${stats.totalLines}',
+
+                        const SizedBox(height: 12),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: _settings,
+                            icon: const Icon(Icons.settings_outlined),
+                            label: const Text('SETTINGS'),
+                          ),
+                        ),
+
+                        const SizedBox(height: 35),
+
+                        const Text(
+                          'Tap to rotate  •  Swipe to move\n'
+                          'Swipe down to drop',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white38, height: 1.6),
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 58,
-                    child: FilledButton.icon(
-                      onPressed: _play,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF7C3AED),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.play_arrow, size: 30),
-                      label: const Text(
-                        'PLAY',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton.icon(
-                      onPressed: _settings,
-                      icon: const Icon(Icons.settings_outlined),
-                      label: const Text('SETTINGS'),
-                    ),
-                  ),
-
-                  const SizedBox(height: 35),
-
-                  const Text(
-                    'Tap to rotate  •  Swipe to move\n'
-                    'Swipe down to drop',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white38, height: 1.6),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+            if (_isBannerLoaded && _bannerAd != null)
+              Container(
+                alignment: Alignment.center,
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              ),
+          ],
         ),
       ),
     );

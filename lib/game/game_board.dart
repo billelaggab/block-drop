@@ -15,8 +15,8 @@ class LockResult {
 }
 
 class GameBoard {
-  static const int width = 10;
-  static const int height = 20;
+  static const int width = 12;
+  static const int height = 19;
   static const int nextQueueSize = 3;
 
   final PieceBag _bag = PieceBag();

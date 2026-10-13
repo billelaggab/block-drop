@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../services/game_settings.dart';
 import '../services/haptic_service.dart';
@@ -38,6 +39,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   static const double _horizontalStep = 25;
   static const double _verticalStep = 28;
 
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  InterstitialAd? _interstitialAd;
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +59,58 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     game.onGameOver = _handleGameOver;
 
     _initialize();
+    _loadBannerAd();
+    _loadInterstitialAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test Ad Unit ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _isBannerLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/1033173712', // Test Ad Unit ID
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAd() {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadInterstitialAd();
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _loadInterstitialAd();
+        },
+      );
+      _interstitialAd!.show();
+      _interstitialAd = null;
+    }
   }
 
   Future<void> _initialize() async {
@@ -76,6 +133,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
     game.onHudChanged = null;
     game.onGameOver = null;
+
+    _bannerAd?.dispose();
+    _interstitialAd?.dispose();
 
     _sound.dispose();
 
@@ -106,6 +166,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (_resultSubmitted) return;
 
     _resultSubmitted = true;
+
+    _showInterstitialAd();
 
     final board = game.board;
 
@@ -252,6 +314,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               ),
 
               _GameControls(game: game),
+              if (_isBannerLoaded && _bannerAd != null)
+                Container(
+                  alignment: Alignment.center,
+                  width: _bannerAd!.size.width.toDouble(),
+                  height: _bannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _bannerAd!),
+                ),
             ],
           ),
         ),
